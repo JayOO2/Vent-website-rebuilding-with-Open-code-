@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Event {
   id: number;
@@ -17,7 +17,7 @@ interface Event {
   }[];
 }
 
-const events: Event[] = [
+const defaultEvents: Event[] = [
   {
     id: 1,
     title: "Cafe De Anatolia Night",
@@ -46,8 +46,8 @@ const events: Event[] = [
       { name: "Eventbrite", url: "#", color: "bg-orange-500 hover:bg-orange-600" },
       { name: "Ticketmaster", url: "#", color: "bg-red-500 hover:bg-red-600" },
       { name: "Viagogo", url: "#", color: "bg-green-500 hover:bg-green-600" },
-      { name: "StubHub", url: "#", color: "bg-yellow-500 hover:bg-yellow-600" },
-      { name: "Resident Advisor", url: "#", color: "bg-pink-500 hover:bg-pink-600" },
+      { name: "RA", url: "#", color: "bg-pink-500 hover:bg-pink-600" },
+      { name: "Dice FM", url: "#", color: "bg-indigo-500 hover:bg-indigo-600" },
     ],
   },
   {
@@ -100,80 +100,103 @@ const events: Event[] = [
   },
 ];
 
+const defaultAnnouncement = {
+  title: "NEW TOUR ANNOUNCEMENT",
+  message: "Cafe De Anatolia World Tour 2026 - Tickets available now!",
+  date: "Coming Soon",
+  active: true,
+};
+
 export default function EventsPage() {
-  const [announcement] = useState({
-    title: "NEW TOUR ANNOUNCEMENT",
-    message: "Cafe De Anatolia World Tour 2026 - Tickets available now!",
-    date: "Coming Soon",
-  });
+  const [events, setEvents] = useState<Event[]>([]);
+  const [announcement, setAnnouncement] = useState(defaultAnnouncement);
+
+  useEffect(() => {
+    const savedEvents = localStorage.getItem("cafeEvents");
+    const savedAnnouncement = localStorage.getItem("cafeAnnouncement");
+    
+    if (savedEvents) {
+      setEvents(JSON.parse(savedEvents));
+    } else {
+      setEvents(defaultEvents);
+    }
+    
+    if (savedAnnouncement) {
+      setAnnouncement(JSON.parse(savedAnnouncement));
+    }
+  }, []);
 
   return (
     <div className="min-h-screen pt-20 pb-12 px-4">
       <div className="max-w-7xl mx-auto">
-        {/* Announcement Banner */}
-        <div className="bg-gradient-to-r from-gold/20 via-accent/20 to-gold/20 border border-gold/30 rounded-lg p-6 mb-12 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-gold mb-2">{announcement.title}</h2>
-          <p className="text-lg text-white mb-2">{announcement.message}</p>
-          <p className="text-sm text-gray-400">{announcement.date}</p>
-        </div>
+        {announcement.active && (
+          <div className="bg-gradient-to-r from-gold/20 via-accent/20 to-gold/20 border border-gold/30 rounded-lg p-6 mb-12 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-gold mb-2">{announcement.title}</h2>
+            <p className="text-lg text-white mb-2">{announcement.message}</p>
+            <p className="text-sm text-gray-400">{announcement.date}</p>
+          </div>
+        )}
 
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-12 text-gold">Events</h1>
 
-        <div className="space-y-8">
-          {events.map((event) => (
-            <div 
-              key={event.id}
-              className="bg-white/5 rounded-lg overflow-hidden border border-white/10 hover:border-gold transition-all duration-300"
-            >
-              <div className="grid md:grid-cols-3 gap-6">
-                {/* Event Image */}
-                <div className="aspect-video md:aspect-auto overflow-hidden">
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Event Details */}
-                <div className="p-6 md:col-span-2">
-                  <div className="flex flex-wrap items-center gap-4 mb-2">
-                    <span className="px-3 py-1 bg-gold/20 text-gold text-sm font-semibold rounded-full">
-                      {event.date}
-                    </span>
-                    <span className="text-gray-400 text-sm">
-                      📍 {event.location}
-                    </span>
+        {events.length === 0 ? (
+          <div className="text-center text-gray-400 py-12">
+            <p>No events scheduled at the moment.</p>
+            <p className="mt-2">Check back soon!</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {events.map((event) => (
+              <div 
+                key={event.id}
+                className="bg-white/5 rounded-lg overflow-hidden border border-white/10 hover:border-gold transition-all duration-300"
+              >
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="aspect-video md:aspect-auto overflow-hidden">
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
 
-                  <h2 className="text-2xl font-bold text-white mb-2">{event.title}</h2>
-                  <p className="text-gray-400 mb-2">📍 {event.venue}</p>
-                  <p className="text-gray-300 mb-6">{event.description}</p>
+                  <div className="p-6 md:col-span-2">
+                    <div className="flex flex-wrap items-center gap-4 mb-2">
+                      <span className="px-3 py-1 bg-gold/20 text-gold text-sm font-semibold rounded-full">
+                        {event.date}
+                      </span>
+                      <span className="text-gray-400 text-sm">
+                        📍 {event.location}
+                      </span>
+                    </div>
 
-                  {/* 5 Touch Button Options */}
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-400 mb-2">🎫 Buy Tickets From:</p>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                      {event.ticketLinks.map((link, index) => (
-                        <a
-                          key={index}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`${link.color} text-white text-center py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg`}
-                        >
-                          {link.name}
-                        </a>
-                      ))}
+                    <h2 className="text-2xl font-bold text-white mb-2">{event.title}</h2>
+                    <p className="text-gray-400 mb-2">📍 {event.venue}</p>
+                    <p className="text-gray-300 mb-6">{event.description}</p>
+
+                    <div className="space-y-3">
+                      <p className="text-sm text-gray-400 mb-2">🎫 Buy Tickets From:</p>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        {event.ticketLinks.map((link, index) => (
+                          <a
+                            key={index}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${link.color} text-white text-center py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg`}
+                          >
+                            {link.name}
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* Contact for Bookings */}
         <div className="mt-12 text-center p-8 bg-white/5 rounded-lg border border-white/10">
           <h3 className="text-xl font-bold text-gold mb-2">Want to book us for your event?</h3>
           <p className="text-gray-400 mb-4">Contact us for booking inquiries</p>
